@@ -1,0 +1,20 @@
+# Ignore all .ipynb_checkpoints directories  
+**/.ipynb_checkpoints/  
+  
+# Ignore all Excel files  
+*.xls  
+*.xlsx  
+*.csv
+  
+# Ignore all JSON files  
+PCM_JSONS/PCM_JSON_FILES/
+QIS_JSONS/QIS_JSON_FILES/
+
+# Ignore all venv directories at any level  
+**/venv/  
+
+Chatapp/frontend/node_modules
+Chatapp/flask_session
+
+.azure/
+__pycache__/

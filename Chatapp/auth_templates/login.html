@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CONNECT AI - Login</title>
+    <link type="text/css" href="/auth_assets/js/bootstrap.min.css" rel="stylesheet">
+    <script src="/auth_assets/js/bootstrap.bundle.min.js"></script>
+    <Style>
+
+.login,
+.image {
+  min-height: 100vh;
+}
+
+.bg-image {
+  background-image: url('/auth_assets/SE_background.png');
+  background-size: cover;
+  background-position: center center;
+}
+.btn-primary{
+  background-color: #8A00E5 !important;
+  border: 1px solid #8A00E5 !important;
+}
+
+.btn-primary:hover{
+  background-color: #641E8C !important;
+  border: 1px solid #641E8C !important;
+}
+.content-box{
+  min-height: calc(100vh - 100px) !important;
+  max-height: calc(100vh - 100px) !important;
+  width: 85% !important;
+  margin: auto;
+  padding-right: 30px;
+  text-align: justify;
+  text-justify: inter-word;
+}
+
+.imp_heading{
+  color: #E85960 ;
+}
+.note_body{
+  color: white;
+}
+.main_list li{
+  margin-bottom: 10px;
+}
+
+    </Style>
+</head>
+<body>
+    <!-- <h1>Microsoft Identity Python Web dsdApp</h1>
+
+    {% if user_code %}
+    <ol>
+      <li>To sign in, type <b>{{ user_code }}</b> into
+        <a href='{{ auth_uri }}' target=_blank>{{ auth_uri }}</a>
+        to authenticate.
+      </li>
+      <li>And then <a href="{{ url_for('auth_response') }}">proceed</a>.</li>
+    </ol>
+    {% else %}
+    <ul><li><a href='{{ auth_uri }}'>Sign In</a></li></ul>
+    {% endif %}
+
+    {% if config.get("B2C_RESET_PASSWORD_AUTHORITY") %}
+    <a href='{{Auth(session={}, authority=config["B2C_RESET_PASSWORD_AUTHORITY"], client_id=config["CLIENT_ID"]).log_in(redirect_uri=url_for("auth_response", _external=True))["auth_uri"]}}'>Reset Password</a>
+    {% endif %}
+
+    <hr>
+    <footer style="text-align: right">Microsoft identity platform Web App Sample {{ version }}</footer> -->
+    <div class="container-fluid">
+      <div class="row no-gutter">
+          <!-- The image half -->
+          <div class="col-md-8 d-none d-md-flex bg-image">
+            <div class="login d-flex align-items-center w-100 h-75 overflow-auto">
+
+                <div class="row content-box overflow-auto">
+                  <section>
+                    <h1 class="imp_heading">STOP! BEFORE YOU CONTINUE!!</h1>
+
+                    <p class="note_body">Before you use the C.O.N.N.E.C.T.A.I chatbot, you MUST review the guidelines guiding the best practices use of Siemens Propriety information and tools, as well understand the technology, data and accuracy limitaitons to be assumed when using an AI driven chatbot.</p>
+
+                    <br>
+                    <p class="note_body">The rules governing the use of C.O.N.N.E.C.T.A.I as a process/decision support tool includes but is not limited to:</p>
+                    <br>
+                    <ol class="note_body main_list">
+                      <li>Do not use AI for any illegal or unethical activities, e.g., creating deepfakes to spread misinformation, conducting surveillance that violates privacy rights, automating Cyber-attacks, or manipulating financial markets.</li>
+                      <li>Do not over rely on AI output without verification, especially when using LLMs beware of misleading information.</li>
+                      <li>Comply with classification levels 2 to protect internal informational assets (i.e., unrestricted, restricted, confidential, and strictly confidential), and</li>
+                      <li>Comply with directive for the use, copying, saving, manupilation of Siemens-Energy intellectual property rights including copyright, trademarks, and trade secrets etc.</li>
+                      <li>Do not feed in information as a prompt, input or training data that includes software (incl. source code) or technology that is subject to export control requirements.</li>
+                      <li>As an AI Driven tool, the user MUST always have a heightened awareness about C.O.N.N.E.C.T.A.I's potential unintended consequences, effects, and related risks:</li>
+                      <ul>
+                        <li>Consider the risk of poisoned training data, which introduces biases or vulnerabilities that could compromise the model’s security, effectiveness, or ethical behaviour.</li>
+                        <li>When developing an LLM based AI system, beware of specific vulnerabilities such as prompt injections where LLMs can be tricked into revealing unintended information to the user.</li>
+                      </ul>
+                      <li>Do not use personal data as input into the tool and always make sure to comply with applicable data privacy laws. Please turn to <i>dataprotection@siemens-energy.com</i> for support.</li>
+                      <li>When using generative AI, it is important to be aware of the potential Cybersecurity risks that may arise from its novel and unpredictable nature. CYS rules and guidelines, such as those found in SFeRA (link here ) and guidance for the ACP Process (link here) can be used to mitigate the common and known Cyber risks.</li>
+                      <li>Security ‘Best Practices’ must be followed when using AI. There must be awareness that malicious actors may use AI to create new and more effective attack methods. Again, use C.O.N.N.E.C.T.A.I as a support tool ONLY.</li>
+                    </ol>
+                    <br>
+                    <p class="note_body">Details of these can be viewed in the Siemens Energy
+                      <a href="https://carl.siemens.cloud/api-carl/file?id=c9990c82-430e-4cac-8f27-73915bc8f2b6">Business Conduct Guidelines</a> with applicable focus on G2, G3, H6 and H7 as well as the <a href="https://siemensenergyag.sharepoint.com/sites/EDAA/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FEDAA%2FShared%20Documents%2FED%26AA%20Data%20Artifacts%20Toolkit%2FData%20Security%2C%20Privacy%20%26%20Compliance%2FAI%20Governance%20Policy%2Epdf&parent=%2Fsites%2FEDAA%2FShared%20Documents%2FED%26AA%20Data%20Artifacts%20Toolkit%2FData%20Security%2C%20Privacy%20%26%20Compliance">Artificial Intelligence Governance Policy</a></p>
+                  </section>
+                  
+                  
+                </div>
+            </div>
+          </div>
+  
+  
+          <!-- The content half -->
+          <div class="col-md-4 bg-light">
+              <div class="login d-flex align-items-center py-5">
+  
+                  <!-- Demo content-->
+                  <div class="container">
+                      <div class="row">
+                          <div class="col-lg-12 col-xl-12"> 
+                            <h4 class="display-4">Welcome To</h4>
+                            <h4 class="display-6">C.O.N.N.E.C.T A.I</h4>
+                            <a href='{{ auth_uri }}' class="btn btn-primary btn-block text-uppercase mb-2 rounded-pill shadow-sm">Sign In With Microsoft ID</a>
+                            <p>Please note that by logging in, you are accepting the terms listed.</p>
+                          </div>
+                      </div>
+                  </div><!-- End -->
+  
+              </div>
+          </div><!-- End -->
+  
+      </div>
+  </div>
+  
+</body>
+</html>
+
