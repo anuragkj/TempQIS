@@ -7,6 +7,7 @@ import uuid
 import httpx
 import asyncio
 import uvicorn
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 import identity.web
 from quart import (
     Blueprint,
@@ -25,6 +26,7 @@ from quart import (
 from flask_session import Session
 from cachelib.file import FileSystemCache
 from werkzeug.middleware.proxy_fix import ProxyFix
+# from werkzeug.contrib.fixers import ProxyFix
 
 from openai import AsyncAzureOpenAI
 from azure.identity.aio import (
@@ -79,7 +81,7 @@ fastapi_app.add_middleware(
 
 main_bp = Blueprint("routes", __name__, static_folder="static", template_folder="static")
 
-auth_bp = Blueprint("auth", __name__, static_folder="auth_templates/assets", template_folder="auth_templates")
+auth_bp = Blueprint("auth", __name__, static_folder="auth_templates/auth_assets", template_folder="auth_templates")
 
 cosmos_db_ready = asyncio.Event()
 
@@ -120,8 +122,15 @@ from common.prompts import CUSTOM_CHATBOT_PROMPT
 cb_handler = StdOutCallbackHandler()
 cb_manager = CallbackManager(handlers=[cb_handler])
 
+token_provider = get_bearer_token_provider(
+    DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"
+)
+
 COMPLETION_TOKENS = 4000
-llm = AzureChatOpenAI(deployment_name=os.environ["AZURE_OPENAI_MODEL"], api_key=os.environ["AZURE_OPENAI_API_KEY"], temperature=0, max_tokens=COMPLETION_TOKENS, streaming=True, callback_manager=cb_manager, api_version="2024-05-01-preview")
+if os.environ["AZURE_OPENAI_API_KEY"]:
+    llm = AzureChatOpenAI(deployment_name=os.environ["AZURE_OPENAI_MODEL"], api_key=os.environ["AZURE_OPENAI_API_KEY"], temperature=0, max_tokens=COMPLETION_TOKENS, streaming=True, callback_manager=cb_manager, api_version="2024-05-01-preview")
+else:
+    llm = AzureChatOpenAI(deployment_name=os.environ["AZURE_OPENAI_MODEL"], azure_ad_token_provider=token_provider, temperature=0, max_tokens=COMPLETION_TOKENS, streaming=True, callback_manager=cb_manager, api_version="2024-05-01-preview")
 
 ## Azure AI Search Agent
 doc_indexes = ["qa1-index-allqis-index"]
@@ -187,6 +196,8 @@ def create_app():
     app = Quart(__name__)
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
+    app.asgi_app = ProxyHeadersMiddleware(app.asgi_app)
+    # app.wsgi_app = ProxyFix(app.wsgi_app)
     app.config["TEMPLATES_AUTO_RELOAD"] = True
     app.config['SESSION_TYPE'] = 'filesystem'
     Session(app)
@@ -266,10 +277,10 @@ __version__ = "0.8.0"
 @auth_bp.route("/")
 async def index():
     # if not auth.get_user() and os.environ["ENABLE_AUTH"].lower()=="true":
-    if not auth.get_user() and app_settings.base_settings.enable_auth:
-        return redirect(url_for("auth.login"))
+    # if not auth.get_user() and app_settings.base_settings.enable_auth:
+    return redirect(url_for("auth.login"))
     # return await render_template('index_auth.html', user=auth.get_user(), version=__version__)
-    return redirect(url_for("routes.index_home"))
+    # return redirect(url_for("routes.index_home"))
 
 @auth_bp.route("/auth_assets/<path:path>")
 async def auth_assets(path):
@@ -277,11 +288,7 @@ async def auth_assets(path):
 
 @auth_bp.route("/login")
 async def login():
-    return await render_template("login.html", version=__version__, **auth.log_in(
-        scopes=["User.Read"], # Have user consent to scopes during log-in
-        redirect_uri=url_for("auth.auth_response", _external=True), # Optional. If present, this absolute URL must match your app's redirect_uri registered in Azure Portal
-        prompt="select_account",  # Optional. More values defined in  https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest
-        ))
+    return await render_template("login.html", version=__version__)
 
 @auth_bp.route("/logout")
 def logout():
@@ -290,6 +297,7 @@ def logout():
 @auth_bp.route(REDIRECT_PATH)
 def auth_response(): 
     result = auth.complete_log_in(request.args)
+    print(result)
     # check for access
     if GROUP_ID in result['groups']:
         session["user_authenticated"] = True
@@ -399,9 +407,9 @@ async def send_chat_request(request_body, request_headers):
             
     request_body['messages'] = filtered_messages
     # Langchain
-    # authenticated_user = get_authenticated_user_details(request_headers=request.headers)
-    # user_id = authenticated_user["user_principal_id"]
-    user_id = session['user_principal_id']
+    authenticated_user = get_authenticated_user_details(request_headers=request.headers)
+    user_id = authenticated_user["user_principal_id"]
+    # user_id = session['user_principal_id']
     
     try:
         # Langchain
@@ -503,9 +511,9 @@ def get_frontend_settings():
 @main_bp.route("/history/generate", methods=["POST"])
 async def add_conversation():
     await cosmos_db_ready.wait()
-    # authenticated_user = get_authenticated_user_details(request_headers=request.headers)
-    # user_id = authenticated_user["user_principal_id"]
-    user_id = session['user_principal_id']
+    authenticated_user = get_authenticated_user_details(request_headers=request.headers)
+    user_id = authenticated_user["user_principal_id"]
+    # user_id = session['user_principal_id']
 
     ## check request for conversation_id
     request_json = await request.get_json()
@@ -560,9 +568,9 @@ async def add_conversation():
 @main_bp.route("/history/update", methods=["POST"])
 async def update_conversation():
     await cosmos_db_ready.wait()
-    # authenticated_user = get_authenticated_user_details(request_headers=request.headers)
-    # user_id = authenticated_user["user_principal_id"]
-    user_id = session['user_principal_id']
+    authenticated_user = get_authenticated_user_details(request_headers=request.headers)
+    user_id = authenticated_user["user_principal_id"]
+    # user_id = session['user_principal_id']
 
     ## check request for conversation_id
     request_json = await request.get_json()
@@ -611,9 +619,9 @@ async def update_conversation():
 @main_bp.route("/history/message_feedback", methods=["POST"])
 async def update_message():
     await cosmos_db_ready.wait()
-    # authenticated_user = get_authenticated_user_details(request_headers=request.headers)
-    # user_id = authenticated_user["user_principal_id"]
-    user_id = session['user_principal_id']
+    authenticated_user = get_authenticated_user_details(request_headers=request.headers)
+    user_id = authenticated_user["user_principal_id"]
+    # user_id = session['user_principal_id']
 
     ## check request for message_id
     request_json = await request.get_json()
@@ -659,9 +667,9 @@ async def update_message():
 async def delete_conversation():
     await cosmos_db_ready.wait()
     ## get the user id from the request headers
-    # authenticated_user = get_authenticated_user_details(request_headers=request.headers)
-    # user_id = authenticated_user["user_principal_id"]
-    user_id = session['user_principal_id']
+    authenticated_user = get_authenticated_user_details(request_headers=request.headers)
+    user_id = authenticated_user["user_principal_id"]
+    # user_id = session['user_principal_id']
 
     ## check request for conversation_id
     request_json = await request.get_json()
@@ -703,9 +711,9 @@ async def delete_conversation():
 async def list_conversations():
     await cosmos_db_ready.wait()
     offset = request.args.get("offset", 0)
-    # authenticated_user = get_authenticated_user_details(request_headers=request.headers)
-    # user_id = authenticated_user["user_principal_id"]
-    user_id = session['user_principal_id']
+    authenticated_user = get_authenticated_user_details(request_headers=request.headers)
+    user_id = authenticated_user["user_principal_id"]
+    # user_id = session['user_principal_id']
 
     ## make sure cosmos is configured
     if not current_app.cosmos_conversation_client:
@@ -726,9 +734,9 @@ async def list_conversations():
 @main_bp.route("/history/read", methods=["POST"])
 async def get_conversation():
     await cosmos_db_ready.wait()
-    # authenticated_user = get_authenticated_user_details(request_headers=request.headers)
-    # user_id = authenticated_user["user_principal_id"]
-    user_id = session['user_principal_id']
+    authenticated_user = get_authenticated_user_details(request_headers=request.headers)
+    user_id = authenticated_user["user_principal_id"]
+    # user_id = session['user_principal_id']
 
     ## check request for conversation_id
     request_json = await request.get_json()
@@ -779,9 +787,9 @@ async def get_conversation():
 @main_bp.route("/history/rename", methods=["POST"])
 async def rename_conversation():
     await cosmos_db_ready.wait()
-    # authenticated_user = get_authenticated_user_details(request_headers=request.headers)
-    # user_id = authenticated_user["user_principal_id"]
-    user_id = session['user_principal_id']
+    authenticated_user = get_authenticated_user_details(request_headers=request.headers)
+    user_id = authenticated_user["user_principal_id"]
+    # user_id = session['user_principal_id']
 
     ## check request for conversation_id
     request_json = await request.get_json()
@@ -824,9 +832,9 @@ async def rename_conversation():
 async def delete_all_conversations():
     await cosmos_db_ready.wait()
     ## get the user id from the request headers
-    # authenticated_user = get_authenticated_user_details(request_headers=request.headers)
-    # user_id = authenticated_user["user_principal_id"]
-    user_id = session['user_principal_id']
+    authenticated_user = get_authenticated_user_details(request_headers=request.headers)
+    user_id = authenticated_user["user_principal_id"]
+    # user_id = session['user_principal_id']
 
     # get conversations for user
     try:
@@ -869,9 +877,9 @@ async def delete_all_conversations():
 async def clear_messages():
     await cosmos_db_ready.wait()
     ## get the user id from the request headers
-    # authenticated_user = get_authenticated_user_details(request_headers=request.headers)
-    # user_id = authenticated_user["user_principal_id"]
-    user_id = session['user_principal_id']
+    authenticated_user = get_authenticated_user_details(request_headers=request.headers)
+    user_id = authenticated_user["user_principal_id"]
+    # user_id = session['user_principal_id']
 
     ## check request for conversation_id
     request_json = await request.get_json()
@@ -971,7 +979,7 @@ app, init_cosmosdb = create_app()
 
 auth = identity.web.Auth(
         session=session,
-        authority=f"https://login.microsoftonline.com/{os.environ["TENANT_ID"]}",
+        authority=f"https://login.microsoftonline.com/{os.environ['TENANT_ID']}",
         client_id=os.environ["CLIENT_ID"],
         client_credential=os.environ["CLIENT_SECRET"],
     )
@@ -983,4 +991,4 @@ async def startup_event():
 fastapi_app.mount("/", app)
 
 # if __name__ == "__main__":
-#     uvicorn.run("app:fastapi_app", host="localhost", port=5000, reload=True)
+#     uvicorn.run("app:fastapi_app", host="localhost", port=3895, reload=True)
